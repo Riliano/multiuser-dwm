@@ -177,6 +177,7 @@ static long getstate(Window w);
 static int gettextprop(Window w, Atom atom, char *text, unsigned int size);
 static void grabbuttons(Client *c, int focused);
 static void grabkeys(void);
+static void hierarchychanged(XEvent *e);
 static void incnmaster(const Arg *arg);
 static void keypress(XEvent *e);
 static void killclient(const Arg *arg);
@@ -255,6 +256,7 @@ static void (*handler[LASTEvent]) (XEvent *) = {
 	[EnterNotify] = enternotify,
 	[Expose] = expose,
 	[FocusIn] = focusin,
+	[XI_HierarchyChanged] = hierarchychanged,
 	[KeyPress] = keypress,
 	[MappingNotify] = mappingnotify,
 	[MapRequest] = maprequest,
@@ -967,6 +969,12 @@ grabkeys(void)
 }
 
 void
+hierarchychanged(XEvent *e)
+{
+	fprintf(stderr, "Hierarchy has changed\n");
+}
+
+void
 incnmaster(const Arg *arg)
 {
 	selmon->nmaster = MAX(selmon->nmaster + arg->i, 0);
@@ -1376,11 +1384,37 @@ void
 run(void)
 {
 	XEvent ev;
+	/* needed to register XI events */
+	int event, error;
+	int xi_opcode;
+	XQueryExtension(dpy, "XInputExtension", &xi_opcode, &event, &error);
+
+	unsigned char mask[2] = {0,0};
+	XIEventMask evmask;
+	evmask.mask = mask;
+	evmask.mask_len = sizeof(mask);
+	evmask.deviceid = XIAllDevices;
+	XISetMask(mask, XI_HierarchyChanged);
+	XISelectEvents(dpy, DefaultRootWindow(dpy), &evmask, 1);
+	XFlush(dpy);
+
 	/* main event loop */
 	XSync(dpy, False);
-	while (running && !XNextEvent(dpy, &ev))
+	while (running && !XNextEvent(dpy, &ev)) {
 		if (handler[ev.type])
 			handler[ev.type](&ev); /* call handler */
+
+		/* handle XI events */
+		XGenericEventCookie *cookie = &ev.xcookie;
+		if (cookie->type == GenericEvent
+		&&	cookie->extension == xi_opcode
+		&&	XGetEventData(dpy, cookie))
+		{
+			if (handler[cookie->evtype])
+				handler[cookie->evtype](&ev); /* call handler with cookie */
+			XFreeEventData(dpy, cookie);
+		}
+	}
 }
 
 void
