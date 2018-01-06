@@ -177,7 +177,7 @@ static long getstate(Window w);
 static int gettextprop(Window w, Atom atom, char *text, unsigned int size);
 static void grabbuttons(Client *c, int focused);
 static void grabkeys(void);
-static void hierarchychanged(XEvent *e);
+static void xi_herarchychanged(XEvent *e);
 static void incnmaster(const Arg *arg);
 static void keypress(XEvent *e);
 static void killclient(const Arg *arg);
@@ -256,13 +256,16 @@ static void (*handler[LASTEvent]) (XEvent *) = {
 	[EnterNotify] = enternotify,
 	[Expose] = expose,
 	[FocusIn] = focusin,
-	[XI_HierarchyChanged] = hierarchychanged,
 	[KeyPress] = keypress,
 	[MappingNotify] = mappingnotify,
 	[MapRequest] = maprequest,
 	[MotionNotify] = motionnotify,
 	[PropertyNotify] = propertynotify,
 	[UnmapNotify] = unmapnotify
+};
+/* handle xi_event in a separete handler to avoid overlapping */
+static void (*xi_handler[XI_LASTEVENT]) (XEvent *) = {
+	[XI_HierarchyChanged] = xi_herarchychanged
 };
 static Atom wmatom[WMLast], netatom[NetLast];
 static int running = 1;
@@ -969,7 +972,7 @@ grabkeys(void)
 }
 
 void
-hierarchychanged(XEvent *e)
+xi_herarchychanged(XEvent *e)
 {
 	fprintf(stderr, "Hierarchy has changed\n");
 }
@@ -1410,8 +1413,8 @@ run(void)
 		&&	cookie->extension == xi_opcode
 		&&	XGetEventData(dpy, cookie))
 		{
-			if (handler[cookie->evtype])
-				handler[cookie->evtype](&ev); /* call handler with cookie */
+			if (xi_handler[cookie->evtype])
+				xi_handler[cookie->evtype](&ev); /* call xi_handler with cookie */
 			XFreeEventData(dpy, cookie);
 		}
 	}
