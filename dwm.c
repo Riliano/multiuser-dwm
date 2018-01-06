@@ -177,7 +177,6 @@ static long getstate(Window w);
 static int gettextprop(Window w, Atom atom, char *text, unsigned int size);
 static void grabbuttons(Client *c, int focused);
 static void grabkeys(void);
-static void xi_herarchychanged(XEvent *e);
 static void incnmaster(const Arg *arg);
 static void keypress(XEvent *e);
 static void killclient(const Arg *arg);
@@ -236,6 +235,9 @@ static Monitor *wintomon(Window w);
 static int xerror(Display *dpy, XErrorEvent *ee);
 static int xerrordummy(Display *dpy, XErrorEvent *ee);
 static int xerrorstart(Display *dpy, XErrorEvent *ee);
+static void xi_herarchychanged(XEvent *e);
+static void xi_focusin(XEvent *e);
+static void xi_focusout(XEvent *e);
 static void zoom(const Arg *arg);
 
 /* variables */
@@ -265,7 +267,9 @@ static void (*handler[LASTEvent]) (XEvent *) = {
 };
 /* handle xi_event in a separete handler to avoid overlapping */
 static void (*xi_handler[XI_LASTEVENT]) (XEvent *) = {
-	[XI_HierarchyChanged] = xi_herarchychanged
+	[XI_HierarchyChanged] = xi_herarchychanged,
+	[XI_FocusIn] = xi_focusin,
+	[XI_FocusOut] = xi_focusout
 };
 static Atom wmatom[WMLast], netatom[NetLast];
 static int running = 1;
@@ -978,6 +982,18 @@ xi_herarchychanged(XEvent *e)
 }
 
 void
+xi_focusin(XEvent *e)
+{
+	fprintf(stderr, "FocusIn Event\n");
+}
+
+void
+xi_focusout(XEvent *e)
+{
+	fprintf(stderr, "FocusOut Event\n");
+}
+
+void
 incnmaster(const Arg *arg)
 {
 	selmon->nmaster = MAX(selmon->nmaster + arg->i, 0);
@@ -1398,6 +1414,8 @@ run(void)
 	evmask.mask_len = sizeof(mask);
 	evmask.deviceid = XIAllDevices;
 	XISetMask(mask, XI_HierarchyChanged);
+	XISetMask(mask, XI_FocusIn);
+	XISetMask(mask, XI_FocusOut);
 	XISelectEvents(dpy, DefaultRootWindow(dpy), &evmask, 1);
 	XFlush(dpy);
 
