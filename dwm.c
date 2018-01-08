@@ -235,7 +235,7 @@ static Monitor *wintomon(Window w);
 static int xerror(Display *dpy, XErrorEvent *ee);
 static int xerrordummy(Display *dpy, XErrorEvent *ee);
 static int xerrorstart(Display *dpy, XErrorEvent *ee);
-static void xi_herarchychanged(XIHierarchyEvent *e);
+static void xi_hierarchychanged(XIHierarchyEvent *e);
 static void xi_focusin(XILeaveEvent *e);
 static void xi_focusout(XILeaveEvent *e);
 static void zoom(const Arg *arg);
@@ -249,6 +249,7 @@ static int bh, blw = 0;      /* bar geometry */
 static int lrpad;            /* sum of left and right padding for text */
 static int (*xerrorxlib)(Display *, XErrorEvent *);
 static unsigned int numlockmask = 0;
+static unsigned int numpairmasterdevices = 1;
 static void (*handler[LASTEvent]) (XEvent *) = {
 	[ButtonPress] = buttonpress,
 	[ClientMessage] = clientmessage,
@@ -970,9 +971,12 @@ grabkeys(void)
 }
 
 void
-xi_herarchychanged(XIHierarchyEvent *e)
+xi_hierarchychanged(XIHierarchyEvent *e)
 {
-	fprintf(stderr, "Hierarchy has changed\n");
+	if (e->flags & XIMasterAdded)
+		numpairmasterdevices++;
+	if (e->flags & XIMasterRemoved)
+		numpairmasterdevices--;
 }
 
 void
@@ -1428,7 +1432,7 @@ run(void)
 			switch(cookie->evtype) {
 			case XI_FocusIn : xi_focusin(cookie->data);break;
 			case XI_FocusOut : xi_focusout(cookie->data);break;
-			case XI_HierarchyChanged : xi_herarchychanged(cookie->data);break;
+			case XI_HierarchyChanged : xi_hierarchychanged(cookie->data);break;
 			}
 			XFreeEventData(dpy, cookie);
 		}
