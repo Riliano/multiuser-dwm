@@ -235,9 +235,9 @@ static Monitor *wintomon(Window w);
 static int xerror(Display *dpy, XErrorEvent *ee);
 static int xerrordummy(Display *dpy, XErrorEvent *ee);
 static int xerrorstart(Display *dpy, XErrorEvent *ee);
-static void xi_herarchychanged(XEvent *e);
-static void xi_focusin(XEvent *e);
-static void xi_focusout(XEvent *e);
+static void xi_herarchychanged(XIHierarchyEvent *e);
+static void xi_focusin(XILeaveEvent *e);
+static void xi_focusout(XILeaveEvent *e);
 static void zoom(const Arg *arg);
 
 /* variables */
@@ -264,12 +264,6 @@ static void (*handler[LASTEvent]) (XEvent *) = {
 	[MotionNotify] = motionnotify,
 	[PropertyNotify] = propertynotify,
 	[UnmapNotify] = unmapnotify
-};
-/* handle xi_event in a separete handler to avoid overlapping */
-static void (*xi_handler[XI_LASTEVENT]) (XEvent *) = {
-	[XI_HierarchyChanged] = xi_herarchychanged,
-	[XI_FocusIn] = xi_focusin,
-	[XI_FocusOut] = xi_focusout
 };
 static Atom wmatom[WMLast], netatom[NetLast];
 static int running = 1;
@@ -976,19 +970,19 @@ grabkeys(void)
 }
 
 void
-xi_herarchychanged(XEvent *e)
+xi_herarchychanged(XIHierarchyEvent *e)
 {
 	fprintf(stderr, "Hierarchy has changed\n");
 }
 
 void
-xi_focusin(XEvent *e)
+xi_focusin(XILeaveEvent *e)
 {
 	fprintf(stderr, "FocusIn Event\n");
 }
 
 void
-xi_focusout(XEvent *e)
+xi_focusout(XILeaveEvent *e)
 {
 	fprintf(stderr, "FocusOut Event\n");
 }
@@ -1431,8 +1425,11 @@ run(void)
 		&&	cookie->extension == xi_opcode
 		&&	XGetEventData(dpy, cookie))
 		{
-			if (xi_handler[cookie->evtype])
-				xi_handler[cookie->evtype](&ev); /* call xi_handler with cookie */
+			switch(cookie->evtype) {
+			case XI_FocusIn : xi_focusin(cookie->data);break;
+			case XI_FocusOut : xi_focusout(cookie->data);break;
+			case XI_HierarchyChanged : xi_herarchychanged(cookie->data);break;
+			}
 			XFreeEventData(dpy, cookie);
 		}
 	}
