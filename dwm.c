@@ -980,23 +980,38 @@ grabkeys(void)
 
 void newmasterdevice(const masterdevice *md)
 {
-	printf("New master device with id's %i and %i", md->pointerid, md->keyboardid);
+	numpairmasterdevices++;
+	printf("New master device with id's %i and %i\n", md->pointerid, md->keyboardid);
 	fflush(stdout);
 }
 
 void removemasterdevice(const masterdevice *md)
 {
-	printf("Remove master device with id's %i and %i", md->pointerid, md->keyboardid);
+	numpairmasterdevices--;
+	printf("Remove master device with id's %i and %i\n", md->pointerid, md->keyboardid);
 	fflush(stdout);
 }
 
 void
 xi_hierarchychanged(XIHierarchyEvent *e)
 {
+	masterdevice md;
+	md.focus = selmon->sel;
+	md.pointerid = -1;
+	md.keyboardid = -1;
+	for (int i = 0;i < e->num_info; i ++) {
+		if (e->info[i].flags & XIMasterAdded) {
+			if (e->info[i].use == XIMasterPointer)
+				md.pointerid = e->info[i].deviceid;
+			if (e->info[i].use == XIMasterKeyboard)
+				md.keyboardid = e->info[i].deviceid;
+		}
+	}
 	if (e->flags & XIMasterAdded)
-		numpairmasterdevices++;
-	if (e->flags & XIMasterRemoved)
-		numpairmasterdevices--;
+		newmasterdevice(&md);
+//	if (e->flags & XIMasterRemoved)
+//		removemasterdevice(&md);
+
 }
 
 void
