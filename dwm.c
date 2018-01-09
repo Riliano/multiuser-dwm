@@ -144,6 +144,12 @@ typedef struct {
 	int monitor;
 } Rule;
 
+typedef struct masterdevice masterdevice;
+struct masterdevice {
+	int pointerid, keyboardid;
+	Client *focus;
+};
+
 /* function declarations */
 static void applyrules(Client *c);
 static int applysizehints(Client *c, int *x, int *y, int *w, int *h, int interact);
@@ -186,6 +192,8 @@ static void maprequest(XEvent *e);
 static void monocle(Monitor *m);
 static void motionnotify(XEvent *e);
 static void movemouse(const Arg *arg);
+static void newmasterdevice(const masterdevice *md);
+static void removemasterdevice(const masterdevice *md);
 static Client *nexttiled(Client *c);
 static void pop(Client *);
 static void propertynotify(XEvent *e);
@@ -968,6 +976,18 @@ grabkeys(void)
 					XGrabKey(dpy, code, keys[i].mod | modifiers[j], root,
 						True, GrabModeAsync, GrabModeAsync);
 	}
+}
+
+void newmasterdevice(const masterdevice *md)
+{
+	printf("New master device with id's %i and %i", md->pointerid, md->keyboardid);
+	fflush(stdout);
+}
+
+void removemasterdevice(const masterdevice *md)
+{
+	printf("Remove master device with id's %i and %i", md->pointerid, md->keyboardid);
+	fflush(stdout);
 }
 
 void
