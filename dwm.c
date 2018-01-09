@@ -144,10 +144,11 @@ typedef struct {
 	int monitor;
 } Rule;
 
-typedef struct masterdevice masterdevice;
-struct masterdevice {
+typedef struct Masterdevice Masterdevice;
+struct Masterdevice {
 	int pointerid, keyboardid;
 	Client *focus;
+	Masterdevice *next;
 };
 
 /* function declarations */
@@ -192,8 +193,8 @@ static void maprequest(XEvent *e);
 static void monocle(Monitor *m);
 static void motionnotify(XEvent *e);
 static void movemouse(const Arg *arg);
-static void newmasterdevice(const masterdevice *md);
-static void removemasterdevice(const masterdevice *md);
+static void addmasterdevice(Masterdevice *md);
+static void removemasterdevice(Masterdevice *md);
 static Client *nexttiled(Client *c);
 static void pop(Client *);
 static void propertynotify(XEvent *e);
@@ -282,6 +283,7 @@ static Display *dpy;
 static Drw *drw;
 static Monitor *mons, *selmon;
 static Window root, wmcheckwin;
+static Masterdevice mdroot;
 
 /* configuration, allows nested code to access above variables */
 #include "config.h"
@@ -978,7 +980,7 @@ grabkeys(void)
 	}
 }
 
-void newmasterdevice(const masterdevice *md)
+void addmasterdevice(Masterdevice *md)
 {
 	numpairmasterdevices++;
 	printf("New master device with id's %i and %i\n",
@@ -986,7 +988,7 @@ void newmasterdevice(const masterdevice *md)
 	fflush(stdout);
 }
 
-void removemasterdevice(const masterdevice *md)
+void removemasterdevice(Masterdevice *md)
 {
 	numpairmasterdevices--;
 	printf("Remove master device with id's %i and %i\n",
@@ -997,10 +999,11 @@ void removemasterdevice(const masterdevice *md)
 void
 xi_hierarchychanged(XIHierarchyEvent *e)
 {
-	masterdevice md;
+	Masterdevice md;
 	md.focus = selmon->sel;
 	md.pointerid = -1;
 	md.keyboardid = -1;
+	md.next = NULL;
 	if (e->flags & XIMasterAdded) {
 		for (int i = 0; i < e->num_info; i ++) {
 			if (e->info[i].flags & XIMasterAdded) {
@@ -1010,7 +1013,7 @@ xi_hierarchychanged(XIHierarchyEvent *e)
 					md.keyboardid = e->info[i].deviceid;
 			}
 		}
-		newmasterdevice(&md);
+		addmasterdevice(&md);
 	}
 	if (e->flags & XIMasterRemoved) {
 		for (int i = 0; i < e->num_info; i ++) {
@@ -1700,6 +1703,19 @@ setup(void)
 	XSelectInput(dpy, root, wa.event_mask);
 	grabkeys();
 	focus(NULL);
+	/* set default master device */
+	int numdevices;
+	mdroot.focus = selmon->sel;
+	XIDeviceInfo *dev, *info;
+	info = XIQueryDevice(dpy, XIAllDevices, &numdevices);
+	for (int i = 0; i < numdevices; i ++) {
+		dev = &info[i];
+		if (dev->use == XIMasterPointer)
+			mdroot.pointerid = dev->deviceid;
+		if (dev->use == XIMasterKeyboard)
+			mdroot.keyboardid = dev->deviceid;
+	}
+	mdroot.next = NULL;
 }
 
 
