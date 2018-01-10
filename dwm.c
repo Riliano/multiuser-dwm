@@ -988,10 +988,7 @@ void addmasterdevice(const Masterdevice *md)
 
 	cur->next = malloc(sizeof(Masterdevice));
 	cur = cur->next;
-	cur->next = NULL;
-	cur->pointerid = md->pointerid;
-	cur->keyboardid = md->keyboardid;
-	cur->focus = md->focus;
+	*cur = *md;
 
 	numpairmasterdevices++;
 	printf("New master device with id's %i and %i\n",
