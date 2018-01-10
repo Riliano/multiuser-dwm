@@ -1484,9 +1484,6 @@ run(void)
 	/* main event loop */
 	XSync(dpy, False);
 	while (running && !XNextEvent(dpy, &ev)) {
-		if (handler[ev.type])
-			handler[ev.type](&ev); /* call handler */
-
 		/* handle XI events */
 		XGenericEventCookie *cookie = &ev.xcookie;
 		if (cookie->type == GenericEvent
@@ -1500,6 +1497,9 @@ run(void)
 			}
 			XFreeEventData(dpy, cookie);
 		}
+
+		if (handler[ev.type])
+			handler[ev.type](&ev); /* call handler */
 	}
 }
 
