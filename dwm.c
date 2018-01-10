@@ -193,7 +193,7 @@ static void maprequest(XEvent *e);
 static void monocle(Monitor *m);
 static void motionnotify(XEvent *e);
 static void movemouse(const Arg *arg);
-static void addmasterdevice(Masterdevice *md);
+static void addmasterdevice(const Masterdevice *md);
 static void removemasterdevice(Masterdevice *md);
 static Client *nexttiled(Client *c);
 static void pop(Client *);
@@ -980,8 +980,19 @@ grabkeys(void)
 	}
 }
 
-void addmasterdevice(Masterdevice *md)
+void addmasterdevice(const Masterdevice *md)
 {
+	Masterdevice *cur = &mdroot;
+	while(cur->next)
+		cur = cur->next;
+
+	cur->next = malloc(sizeof(Masterdevice));
+	cur = cur->next;
+	cur->next = NULL;
+	cur->pointerid = md->pointerid;
+	cur->keyboardid = md->keyboardid;
+	cur->focus = md->focus;
+
 	numpairmasterdevices++;
 	printf("New master device with id's %i and %i\n",
 			md->pointerid, md->keyboardid);
