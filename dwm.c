@@ -247,6 +247,7 @@ static int xerrorstart(Display *dpy, XErrorEvent *ee);
 static void xi_hierarchychanged(XIHierarchyEvent *e);
 static void xi_focusin(XILeaveEvent *e);
 static void xi_focusout(XILeaveEvent *e);
+static void xi_rawevent(XIRawEvent *e);
 static void zoom(const Arg *arg);
 
 /* variables */
@@ -1056,6 +1057,11 @@ xi_focusout(XILeaveEvent *e)
 }
 
 void
+xi_rawevent(XIRawEvent *e)
+{
+}
+
+void
 incnmaster(const Arg *arg)
 {
 	selmon->nmaster = MAX(selmon->nmaster + arg->i, 0);
@@ -1478,6 +1484,7 @@ run(void)
 	XISetMask(mask, XI_HierarchyChanged);
 	XISetMask(mask, XI_FocusIn);
 	XISetMask(mask, XI_FocusOut);
+	XISetMask(mask, XI_RawKeyPress);
 	XISelectEvents(dpy, DefaultRootWindow(dpy), &evmask, 1);
 	XFlush(dpy);
 
@@ -1494,6 +1501,7 @@ run(void)
 			case XI_FocusIn : xi_focusin(cookie->data);break;
 			case XI_FocusOut : xi_focusout(cookie->data);break;
 			case XI_HierarchyChanged : xi_hierarchychanged(cookie->data);break;
+			case XI_RawKeyPress : xi_rawevent(cookie->data);break;
 			}
 			XFreeEventData(dpy, cookie);
 		}
