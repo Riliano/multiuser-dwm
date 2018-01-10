@@ -194,7 +194,7 @@ static void monocle(Monitor *m);
 static void motionnotify(XEvent *e);
 static void movemouse(const Arg *arg);
 static void addmasterdevice(const Masterdevice *md);
-static void removemasterdevice(Masterdevice *md);
+static void removemasterdevice(const Masterdevice *md);
 static Client *nexttiled(Client *c);
 static void pop(Client *);
 static void propertynotify(XEvent *e);
@@ -993,12 +993,21 @@ void addmasterdevice(const Masterdevice *md)
 	numpairmasterdevices++;
 }
 
-void removemasterdevice(Masterdevice *md)
+void removemasterdevice(const Masterdevice *md)
 {
+	if (numpairmasterdevices == 1) {
+		fprintf(stderr, "Refusing to remove the only pair of master devices");
+		return;
+	}
+
+	Masterdevice *cur = &mdroot;
+	/* it cannot be garanteed that md is correctly set up,
+	since when xinput removes master device it looses the keyboard/pointer label */
+	while (cur->next->pointerid != md->pointerid
+		&& cur->next->keyboardid != md->pointerid)
+		cur = cur->next;
+	cur->next = cur->next->next;
 	numpairmasterdevices--;
-	printf("Remove master device with id's %i and %i\n",
-			md->pointerid, md->keyboardid);
-	fflush(stdout);
 }
 
 void
