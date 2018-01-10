@@ -983,17 +983,14 @@ grabkeys(void)
 void addmasterdevice(const Masterdevice *md)
 {
 	Masterdevice *cur = &mdroot;
-	while(cur->next)
-		cur = cur->next;
+	Masterdevice newmd = *md;
+	newmd.next = mdroot.next;
 
 	cur->next = malloc(sizeof(Masterdevice));
 	cur = cur->next;
-	*cur = *md;
+	*cur = newmd;
 
 	numpairmasterdevices++;
-	printf("New master device with id's %i and %i\n",
-			md->pointerid, md->keyboardid);
-	fflush(stdout);
 }
 
 void removemasterdevice(Masterdevice *md)
