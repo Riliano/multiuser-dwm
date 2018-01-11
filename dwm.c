@@ -284,7 +284,7 @@ static Display *dpy;
 static Drw *drw;
 static Monitor *mons, *selmon;
 static Window root, wmcheckwin;
-static Masterdevice mdroot;
+static Masterdevice mdroot, *mdsel;
 
 /* configuration, allows nested code to access above variables */
 #include "config.h"
@@ -831,6 +831,9 @@ focusin(XEvent *e)
 
 	if (selmon->sel && ev->window != selmon->sel->win)
 		setfocus(selmon->sel);
+	/* Change the focused window of the current device
+	to the one that was just focused */
+	mdsel->focus = selmon->sel;
 }
 
 void
@@ -1059,6 +1062,20 @@ xi_focusout(XILeaveEvent *e)
 void
 xi_rawevent(XIRawEvent *e)
 {
+	/* Whenever a key press is detected change the selcted client
+	to the one selected by the master device that send the event */
+	if (numpairmasterdevices == 1) {
+		mdsel = &mdroot;
+		return;
+	}
+	int targetid = e->deviceid;
+	for (Masterdevice *cur = &mdroot; cur; cur = cur->next) {
+		if (cur->keyboardid == targetid || cur->pointerid == targetid) {
+			selmon->sel = cur->focus;
+			mdsel = cur;
+			return;
+		}
+	}
 }
 
 void
