@@ -1,6 +1,8 @@
-dwm - dynamic window manager
+multiuser-dwm - dynamic window manager that supports more than one user
 ============================
 dwm is an extremely fast, small, and dynamic window manager for X.
+This project takes dwm uses XInput2's ability to have more than one pair of master devices in order for dwm
+to be usable with more than one user at a time.
 
 
 Requirements
