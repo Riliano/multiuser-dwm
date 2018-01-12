@@ -1502,7 +1502,7 @@ run(void)
 	unsigned char mask[2] = {0,0};
 	XIEventMask evmask;
 	evmask.mask = mask;
-	evmask.mask_len = sizeof(mask);
+	evmask.mask_len = XIMaskLen(XI_LASTEVENT);
 	evmask.deviceid = XIAllDevices;
 	XISetMask(mask, XI_HierarchyChanged);
 	XISetMask(mask, XI_FocusIn);
