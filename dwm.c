@@ -147,6 +147,7 @@ typedef struct {
 typedef struct Masterdevice Masterdevice;
 struct Masterdevice {
 	int pointerid, keyboardid;
+	int color;
 	Client *focus;
 	Masterdevice *next;
 };
@@ -813,7 +814,8 @@ focus(Client *c)
 		detachstack(c);
 		attachstack(c);
 		grabbuttons(c, 1);
-		XSetWindowBorder(dpy, c->win, scheme[SchemeSel][ColBorder].pixel);
+		int colorid = mdsel->color;
+		XSetWindowBorder(dpy, c->win, scheme[SchemeSel + colorid][ColBorder].pixel);
 		setfocus(c);
 	} else {
 		XSetInputFocus(dpy, root, RevertToPointerRoot, CurrentTime);
@@ -989,6 +991,7 @@ void addmasterdevice(const Masterdevice *md)
 	Masterdevice *cur = &mdroot;
 	Masterdevice newmd = *md;
 	newmd.next = mdroot.next;
+	newmd.color = numpairmasterdevices;
 
 	cur->next = malloc(sizeof(Masterdevice));
 	cur = cur->next;
@@ -1750,6 +1753,7 @@ setup(void)
 	/* set default master device */
 	int numdevices;
 	mdroot.focus = selmon->sel;
+	mdroot.color = 0;
 	XIDeviceInfo *dev, *info;
 	info = XIQueryDevice(dpy, XIAllDevices, &numdevices);
 	for (int i = 0; i < numdevices; i ++) {
