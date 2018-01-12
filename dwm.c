@@ -814,7 +814,9 @@ focus(Client *c)
 		detachstack(c);
 		attachstack(c);
 		grabbuttons(c, 1);
-		int colorid = mdsel->color;
+		/* sizeof(colors)/sizeof(colots[SchemeNorm]) gives the amount of elements in colors
+		-1 for SchemeNorm is the numbers of colors available */
+		int colorid = mdsel->color % (sizeof(colors)/sizeof(colors[SchemeNorm]) - 1);
 		XSetWindowBorder(dpy, c->win, scheme[SchemeSel + colorid][ColBorder].pixel);
 		setfocus(c);
 	} else {
