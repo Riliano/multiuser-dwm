@@ -1071,7 +1071,8 @@ xi_rawevent(XIRawEvent *e)
 	int targetid = e->deviceid;
 	for (Masterdevice *cur = &mdroot; cur; cur = cur->next) {
 		if (cur->keyboardid == targetid || cur->pointerid == targetid) {
-			selmon->sel = cur->focus;
+			if (cur->focus)
+				selmon->sel = cur->focus;
 			mdsel = cur;
 			return;
 		}
@@ -1502,6 +1503,8 @@ run(void)
 	XISetMask(mask, XI_FocusIn);
 	XISetMask(mask, XI_FocusOut);
 	XISetMask(mask, XI_RawKeyPress);
+	XISetMask(mask, XI_RawButtonPress);
+	XISetMask(mask, XI_RawMotion);
 	XISelectEvents(dpy, DefaultRootWindow(dpy), &evmask, 1);
 	XFlush(dpy);
 
@@ -1518,7 +1521,9 @@ run(void)
 			case XI_FocusIn : xi_focusin(cookie->data);break;
 			case XI_FocusOut : xi_focusout(cookie->data);break;
 			case XI_HierarchyChanged : xi_hierarchychanged(cookie->data);break;
-			case XI_RawKeyPress : xi_rawevent(cookie->data);break;
+			case XI_RawKeyPress :
+			case XI_RawButtonPress :
+			case XI_RawMotion : xi_rawevent(cookie->data);break;
 			}
 			XFreeEventData(dpy, cookie);
 		}
